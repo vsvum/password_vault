@@ -7,4 +7,4 @@
 │  🔐 Encryption Module (AES-256-GCM)                     │
 │  💾 Database (SQLite/PostgreSQL)                        │
 │  🔑 Key Management (Environment Variables / Vault)      │
-└─────────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────────┘tetet
