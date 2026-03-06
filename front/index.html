@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔐 Password Vault</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        input, button { padding: 10px; margin: 5px 0; width: 100%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        .danger { background: #ffe6e6; }
+    </style>
+</head>
+<body>
+    <h1>🔐 Менеджер зашифрованных паролей</h1>
+
+    <form method="POST" action="/add">
+        <input type="text" name="service_name" placeholder="Сервис (например, Google)" required>
+        <input type="text" name="username" placeholder="Логин" required>
+        <input type="password" name="password" placeholder="Пароль" required>
+        <button type="submit">💾 Сохранить</button>
+    </form>
+
+    <table>
+        <tr><th>Сервис</th><th>Логин</th><th>Действия</th></tr>
+        {% for entry in entries %}
+        <tr>
+            <td>{{ entry.service_name }}</td>
+            <td>{{ entry.username }}</td>
+            <td>
+                <button onclick="decrypt({{ entry.id }})">👁 Показать</button>
+                <button class="danger" onclick="del({{ entry.id }})">🗑 Удалить</button>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <div id="result" style="margin-top:20px; padding:10px; background:#e6ffe6; display:none;"></div>
+
+    <script>
+        async function decrypt(id) {
+            const res = await fetch(`/decrypt/${id}`);
+            const data = await res.json();
+            document.getElementById('result').innerText = `Пароль: ${data.password}`;
+            document.getElementById('result').style.display = 'block';
+        }
+        async function del(id) {
+            if(confirm('Удалить запись?')) {
+                await fetch(`/delete/${id}`, {method: 'DELETE'});
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
