@@ -1,54 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-    <title>🔐 Password Vault</title>
-    <style>
-        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
-        input, button { padding: 10px; margin: 5px 0; width: 100%; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        .danger { background: #ffe6e6; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Secret Scanner MVP</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>🔐 Менеджер зашифрованных паролей</h1>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <h1>🔐 Secret Scanner</h1>
+            </div>
+            <nav>
+                <a href="#" class="nav-item active" data-page="scan">
+                    <span>🔍</span> Сканирование
+                </a>
+                <a href="#" class="nav-item" data-page="results">
+                    <span>📊</span> Результаты
+                </a>
+                <a href="#" class="nav-item" data-page="reports">
+                    <span>📁</span> Отчёты
+                </a>
+                <a href="#" class="nav-item" data-page="settings">
+                    <span>⚙️</span> Настройки
+                </a>
+            </nav>
+        </aside>
 
-    <form method="POST" action="/add">
-        <input type="text" name="service_name" placeholder="Сервис (например, Google)" required>
-        <input type="text" name="username" placeholder="Логин" required>
-        <input type="password" name="password" placeholder="Пароль" required>
-        <button type="submit">💾 Сохранить</button>
-    </form>
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Scan Page -->
+            <section id="scan-page" class="page active">
+                <h2>🔍 Сканирование репозитория</h2>
+                
+                <div class="scan-form">
+                    <div class="form-group">
+                        <label>Путь к репозиторию:</label>
+                        <input type="text" id="repo-path" value="." placeholder="/path/to/repo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="scan-history" checked>
+                            Сканировать историю Git
+                        </label>
+                    </div>
+                    
+                    <button id="start-scan" class="btn btn-primary">
+                        🚀 Начать сканирование
+                    </button>
+                </div>
 
-    <table>
-        <tr><th>Сервис</th><th>Логин</th><th>Действия</th></tr>
-        {% for entry in entries %}
-        <tr>
-            <td>{{ entry.service_name }}</td>
-            <td>{{ entry.username }}</td>
-            <td>
-                <button onclick="decrypt({{ entry.id }})">👁 Показать</button>
-                <button class="danger" onclick="del({{ entry.id }})">🗑 Удалить</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+                <div id="scan-progress" class="progress-container" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <p id="progress-text">Сканирование...</p>
+                </div>
 
-    <div id="result" style="margin-top:20px; padding:10px; background:#e6ffe6; display:none;"></div>
+                <div id="scan-stats" class="stats-grid" style="display: none;">
+                    <div class="stat-card">
+                        <h3>📁 Файлов</h3>
+                        <p id="stat-files">0</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>⚠️ Секретов</h3>
+                        <p id="stat-secrets">0</p>
+                    </div>
+                    <div class="stat-card high-risk">
+                        <h3>🔴 Высокий риск</h3>
+                        <p id="stat-high">0</p>
+                    </div>
+                    <div class="stat-card medium-risk">
+                        <h3>🟠 Средний риск</h3>
+                        <p id="stat-medium">0</p>
+                    </div>
+                    <div class="stat-card low-risk">
+                        <h3>🟡 Низкий риск</h3>
+                        <p id="stat-low">0</p>
+                    </div>
+                </div>
+            </section>
 
-    <script>
-        async function decrypt(id) {
-            const res = await fetch(`/decrypt/${id}`);
-            const data = await res.json();
-            document.getElementById('result').innerText = `Пароль: ${data.password}`;
-            document.getElementById('result').style.display = 'block';
-        }
-        async function del(id) {
-            if(confirm('Удалить запись?')) {
-                await fetch(`/delete/${id}`, {method: 'DELETE'});
-                location.reload();
-            }
-        }
-    </script>
+            <!-- Results Page -->
+            <section id="results-page" class="page">
+                <h2>📊 Результаты сканирования</h2>
+                
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Типы секретов</h3>
+                        <canvas id="secrets-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Уровень риска</h3>
+                        <canvas id="risk-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="findings-table-container">
+                    <table class="findings-table">
+                        <thead>
+                            <tr>
+                                <th>Файл</th>
+                                <th>Тип секрета</th>
+                                <th>Риск</th>
+                                <th>Строка</th>
+                                <th>Коммит</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="findings-body">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Reports Page -->
+            <section id="reports-page" class="page">
+                <h2>📁 Сохранённые отчёты</h2>
+                <div id="reports-list" class="reports-list"></div>
+            </section>
+
+            <!-- Settings Page -->
+            <section id="settings-page" class="page">
+                <h2>⚙️ Настройки</h2>
+                <div class="settings-form">
+                    <div class="form-group">
+                        <label>Порог энтропии:</label>
+                        <input type="range" id="entropy-threshold" min="3" max="6" step="0.1" value="4.5">
+                        <span id="entropy-value">4.5</span>
+                    </div>
+                    <div class="form-group">
+                        <label>Игнорируемые папки:</label>
+                        <textarea id="ignore-folders">node_modules,vendor,.git,venv</textarea>
+                    </div>
+                    <button class="btn btn-primary">💾 Сохранить</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
 </body>
 </html>
